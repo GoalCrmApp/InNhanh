@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phiếu Đề Nghị Yêu Cầu</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Times New Roman', serif;
+            line-height: 1.4;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+        }
+
+        .company-name {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .title {
+            font-size: 18px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin: 15px 0;
+        }
+
+        .form-row {
+            display: flex;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .form-row.full-width {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .label {
+            font-weight: bold;
+            min-width: 150px;
+            margin-right: 10px;
+        }
+
+        .value {
+            flex: 1;
+            padding: 5px;
+            border-bottom: 1px solid #333;
+            min-height: 25px;
+        }
+
+        .table-section {
+            margin: 20px 0;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        .items-table th,
+        .items-table td {
+            border: 1px solid #333;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .items-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+
+        .signature-section {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+
+        .signature-box {
+            text-align: center;
+            width: 200px;
+        }
+
+        .signature-title {
+            font-weight: bold;
+            margin-bottom: 50px;
+        }
+
+        .signature-line {
+            border-bottom: 1px solid #333;
+            margin: 5px 0;
+        }
+
+        .buttons {
+            text-align: center;
+            margin: 20px 0;
+            gap: 10px;
+        }
+
+        .btn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 0 5px;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+        }
+
+        .btn-success:hover {
+            background-color: #1e7e34;
+        }
+
+        @media print {
+            body {
+                background-color: white;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                max-width: none;
+                margin: 0;
+                padding: 20px;
+            }
+            .buttons {
+                display: none;
+            }
+        }
+
+        .status-approved {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .status-pending {
+            color: #ffc107;
+            font-weight: bold;
+        }
+
+        .status-rejected {
+            color: #dc3545;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="printArea">
+        <!-- Header -->
+        <div class="header">
+            <div class="company-name">CÔNG TY ABC</div>
+            <div class="title">PHIẾU ĐỀ NGHỊ YÊU CẦU</div>
+        </div>
+
+        <!-- Thông tin cơ bản -->
+        <div class="form-row">
+            <span class="label">ID Yêu cầu:</span>
+            <span class="value" id="idYeuCau"></span>
+        </div>
+
+        <div class="form-row">
+            <span class="label">Ngày yêu cầu:</span>
+            <span class="value" id="ngayYeuCau"></span>
+        </div>
+
+        <div class="form-row">
+            <span class="label">Người yêu cầu:</span>
+            <span class="value" id="nguoiYeuCau"></span>
+        </div>
+
+        <div class="form-row">
+            <span class="label">Trạng thái:</span>
+            <span class="value" id="trangThai"></span>
+        </div>
+
+        <!-- Bảng chi tiết hàng hóa -->
+        <div class="table-section">
+            <h3>Chi tiết yêu cầu:</h3>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th style="width: 10%">STT</th>
+                        <th style="width: 15%">Mã hàng</th>
+                        <th style="width: 25%">Tên hàng</th>
+                        <th style="width: 10%">Đơn vị</th>
+                        <th style="width: 10%">Số lượng</th>
+                        <th style="width: 15%">Đơn giá</th>
+                        <th style="width: 15%">Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody id="itemsTableBody">
+                    <!-- Dữ liệu sẽ được thêm bằng JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Ghi chú -->
+        <div class="form-row full-width">
+            <span class="label">Ghi chú:</span>
+            <div class="value" id="ghiChu" style="min-height: 50px; border: 1px solid #333; padding: 10px;"></div>
+        </div>
+
+        <!-- Thông tin duyệt -->
+        <div class="form-row">
+            <span class="label">Người duyệt:</span>
+            <span class="value" id="nguoiDuyet"></span>
+        </div>
+
+        <div class="form-row">
+            <span class="label">Ngày duyệt:</span>
+            <span class="value" id="ngayDuyet"></span>
+        </div>
+
+        <div class="form-row full-width">
+            <span class="label">Ghi chú duyệt:</span>
+            <div class="value" id="ghiChuDuyet" style="min-height: 50px; border: 1px solid #333; padding: 10px;"></div>
+        </div>
+
+        <!-- Chữ ký -->
+        <div class="signature-section">
+            <div class="signature-box">
+                <div class="signature-title">Người yêu cầu</div>
+                <div class="signature-line"></div>
+                <div id="nguoiYeuCauKy"></div>
+            </div>
+            <div class="signature-box">
+                <div class="signature-title">Người duyệt</div>
+                <div class="signature-line"></div>
+                <div id="nguoiDuyetKy"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="buttons">
+        <button class="btn" onclick="printForm()">In phiếu</button>
+        <button class="btn btn-success" onclick="exportToPDF()">Xuất PDF</button>
+    </div>
+
+    <script>
+        // Hàm lấy parameters từ URL
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name) || '';
+        }
+
+        // Hàm format tiền tệ
+        function formatCurrency(amount) {
+            if (!amount) return '0';
+            return parseFloat(amount).toLocaleString('vi-VN') + ' đ';
+        }
+
+        // Hàm format ngày
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('vi-VN');
+        }
+
+        // Hàm format trạng thái
+        function formatStatus(status) {
+            const statusElement = document.getElementById('trangThai');
+            switch(status?.toLowerCase()) {
+                case 'approved':
+                case 'đã duyệt':
+                    statusElement.className = 'value status-approved';
+                    return 'Đã duyệt';
+                case 'pending':
+                case 'chờ duyệt':
+                    statusElement.className = 'value status-pending';
+                    return 'Chờ duyệt';
+                case 'rejected':
+                case 'từ chối':
+                    statusElement.className = 'value status-rejected';
+                    return 'Từ chối';
+                default:
+                    return status || '';
+            }
+        }
+
+        // Hàm load dữ liệu từ URL
+        function loadDataFromUrl() {
+            // Load thông tin cơ bản
+            document.getElementById('idYeuCau').textContent = getUrlParameter('id') || '';
+            document.getElementById('ngayYeuCau').textContent = formatDate(getUrlParameter('ngayYeuCau'));
+            document.getElementById('nguoiYeuCau').textContent = getUrlParameter('nguoiYeuCau') || '';
+            document.getElementById('trangThai').textContent = formatStatus(getUrlParameter('trangThai'));
+            document.getElementById('ghiChu').textContent = getUrlParameter('ghiChu') || '';
+            document.getElementById('nguoiDuyet').textContent = getUrlParameter('nguoiDuyet') || '';
+            document.getElementById('ngayDuyet').textContent = formatDate(getUrlParameter('ngayDuyet'));
+            document.getElementById('ghiChuDuyet').textContent = getUrlParameter('ghiChuDuyet') || '';
+            
+            // Set chữ ký
+            document.getElementById('nguoiYeuCauKy').textContent = getUrlParameter('nguoiYeuCau') || '';
+            document.getElementById('nguoiDuyetKy').textContent = getUrlParameter('nguoiDuyet') || '';
+
+            // Load chi tiết hàng hóa
+            loadItemsData();
+        }
+
+        // Hàm load dữ liệu chi tiết hàng hóa
+        function loadItemsData() {
+            const tbody = document.getElementById('itemsTableBody');
+            tbody.innerHTML = '';
+
+            // Lấy dữ liệu từ URL (có thể là JSON string hoặc multiple parameters)
+            let items = [];
+            
+            // Cách 1: Dữ liệu JSON trong parameter
+            const itemsJson = getUrlParameter('items');
+            if (itemsJson) {
+                try {
+                    items = JSON.parse(decodeURIComponent(itemsJson));
+                } catch (e) {
+                    console.error('Error parsing items JSON:', e);
+                }
+            }
+            
+            // Cách 2: Dữ liệu từ multiple parameters
+            if (items.length === 0) {
+                const maHang = getUrlParameter('maHang');
+                const tenHang = getUrlParameter('tenHang');
+                const donVi = getUrlParameter('donVi');
+                const soLuong = getUrlParameter('soLuong');
+                const donGia = getUrlParameter('donGia');
+                const thanhTien = getUrlParameter('thanhTien');
+
+                if (maHang) {
+                    items = [{
+                        maHang: maHang,
+                        tenHang: tenHang,
+                        donVi: donVi,
+                        soLuong: soLuong,
+                        donGia: donGia,
+                        thanhTien: thanhTien
+                    }];
+                }
+            }
+
+            // Hiển thị dữ liệu
+            if (items.length === 0) {
+                // Tạo dòng trống nếu không có dữ liệu
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>1</td>
+                    <td>${getUrlParameter('maHang') || ''}</td>
+                    <td>${getUrlParameter('tenHang') || ''}</td>
+                    <td>${getUrlParameter('donVi') || ''}</td>
+                    <td>${getUrlParameter('soLuong') || ''}</td>
+                    <td>${formatCurrency(getUrlParameter('donGia'))}</td>
+                    <td>${formatCurrency(getUrlParameter('thanhTien'))}</td>
+                `;
+                tbody.appendChild(row);
+            } else {
+                items.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${item.maHang || ''}</td>
+                        <td>${item.tenHang || ''}</td>
+                        <td>${item.donVi || ''}</td>
+                        <td>${item.soLuong || ''}</td>
+                        <td>${formatCurrency(item.donGia)}</td>
+                        <td>${formatCurrency(item.thanhTien)}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+
+            // Thêm dòng tổng cộng nếu có nhiều items
+            if (items.length > 1) {
+                const totalAmount = items.reduce((sum, item) => sum + (parseFloat(item.thanhTien) || 0), 0);
+                const totalRow = document.createElement('tr');
+                totalRow.innerHTML = `
+                    <td colspan="6" style="font-weight: bold; text-align: right;">Tổng cộng:</td>
+                    <td style="font-weight: bold;">${formatCurrency(totalAmount)}</td>
+                `;
+                tbody.appendChild(totalRow);
+            }
+        }
+
+        // Hàm in
+        function printForm() {
+            window.print();
+        }
+
+        // Hàm xuất PDF
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const element = document.getElementById('printArea');
+            
+            html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true
+            }).then(function(canvas) {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                
+                const imgWidth = 210;
+                const pageHeight = 295;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let heightLeft = imgHeight;
+                
+                let position = 0;
+                
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+                
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+                
+                const fileName = `Phieu_de_nghi_${getUrlParameter('id') || 'unknown'}.pdf`;
+                pdf.save(fileName);
+            });
+        }
+
+        // Load dữ liệu khi trang được tải
+        window.onload = function() {
+            loadDataFromUrl();
+        };
+    </script>
+</body>
+</html>
